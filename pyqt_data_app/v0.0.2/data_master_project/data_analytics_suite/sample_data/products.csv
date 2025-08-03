@@ -1,0 +1,12 @@
+ProductID,ProductName,Category,UnitPrice,UnitsInStock,Discontinued
+1,Chai,Beverages,18.00,39,0
+2,Chang,Beverages,19.50,17,0
+3,Aniseed Syrup,Condiments,10.00,13,0
+4,Chef Anton's Cajun Seasoning,Condiments,22.00,53,0
+5,Grandma's Boysenberry Spread,Condiments,25.55,120,0
+6,Uncle Bob's Organic Dried Pears,Produce,30.00,15,0
+7,Northwoods Cranberry Sauce,Condiments,40.00,6,0
+8,Mishi Kobe Niku,Meat/Poultry,97.00,29,1
+9,Ikura,Seafood,31.00,31,0
+10,Queso Cabrales,Dairy Products,21.00,22,0
+11,Queso Manchego La Pastora,Dairy Products,38.00,86,0
