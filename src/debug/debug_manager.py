@@ -2,6 +2,7 @@ from typing import Optional, List
 import logging
 import logging.handlers
 from datetime import datetime
+import os
 import psutil
 from .metrics import OperationMetrics
 
@@ -17,6 +18,9 @@ class DebugManager:
         """Configure logging with file rotation and formatting."""
         logger = logging.getLogger('DataMasterPro')
         logger.setLevel(logging.DEBUG if self.debug_mode else logging.INFO)
+        
+        # Ensure logs directory exists
+        os.makedirs('logs', exist_ok=True)
         
         # File handler with rotation
         handler = logging.handlers.RotatingFileHandler(
@@ -54,7 +58,7 @@ class DebugManager:
             
         total_ops = len(self.metrics_history)
         successful_ops = sum(1 for m in self.metrics_history if m.success)
-        avg_duration = sum((m.end_time - m.start_time) for m in self.metrics_history) / total_ops
+        avg_duration = sum((m.end_time - m.start_time).total_seconds() for m in self.metrics_history) / total_ops
         
         return {
             "total_operations": total_ops,
