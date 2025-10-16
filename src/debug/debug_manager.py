@@ -58,7 +58,7 @@ class DebugManager:
             
         total_ops = len(self.metrics_history)
         successful_ops = sum(1 for m in self.metrics_history if m.success)
-        avg_duration = sum((m.end_time - m.start_time) for m in self.metrics_history) / total_ops
+        avg_duration = sum((m.end_time - m.start_time).total_seconds() for m in self.metrics_history) / total_ops
         
         return {
             "total_operations": total_ops,
