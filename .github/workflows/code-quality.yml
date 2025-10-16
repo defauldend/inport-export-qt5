@@ -1,0 +1,105 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-quality-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-quality-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pylint black isort mypy bandit safety
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    
+    - name: Check code formatting with Black
+      run: |
+        black --check --line-length 127 main.py || echo "::warning::Code formatting issues found. Run 'black main.py' to fix."
+    
+    - name: Check import sorting with isort
+      run: |
+        isort --check-only --profile black main.py || echo "::warning::Import sorting issues found. Run 'isort main.py' to fix."
+    
+    - name: Run Pylint
+      run: |
+        pylint --disable=all --enable=E,F main.py || true
+    
+    - name: Security check with Bandit
+      run: |
+        bandit -r . -f json -o bandit-report.json --exclude ./venv,./pyqt_data_app || true
+        bandit -r . --exclude ./venv,./pyqt_data_app || true
+    
+    - name: Check dependencies for vulnerabilities
+      run: |
+        safety check --json || true
+    
+    - name: Upload Bandit report
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: bandit-security-report
+        path: bandit-report.json
+
+  documentation:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Check README exists
+      run: |
+        test -f README.md || exit 1
+        echo "README.md exists"
+    
+    - name: Check README content
+      run: |
+        grep -q "Installation" README.md || echo "::warning::README missing Installation section"
+        grep -q "Usage" README.md || echo "::warning::README missing Usage section"
+        grep -q "Features" README.md || echo "::warning::README missing Features section"
+    
+    - name: Check for inline documentation
+      run: |
+        python -c "
+        import ast
+        import sys
+        
+        with open('main.py', 'r') as f:
+            tree = ast.parse(f.read())
+        
+        classes = [node for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
+        functions = [node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]
+        
+        print(f'Found {len(classes)} classes and {len(functions)} functions')
+        
+        undocumented = []
+        for node in classes + functions:
+            if not ast.get_docstring(node):
+                undocumented.append(node.name)
+        
+        if undocumented:
+            print(f'::warning::Undocumented items: {undocumented}')
+        else:
+            print('All classes and functions are documented')
+        "
