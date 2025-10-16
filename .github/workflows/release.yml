@@ -1,0 +1,87 @@
+name: Release CD
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+
+jobs:
+  build-and-release:
+    name: Build and Release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.11']
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install system dependencies (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Build executable (Ubuntu/macOS)
+      if: runner.os != 'Windows'
+      run: |
+        pyinstaller --onefile --windowed --name data-management-tool main.py
+    
+    - name: Build executable (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        pyinstaller --onefile --windowed --name data-management-tool.exe main.py
+    
+    - name: Create distribution package
+      run: |
+        mkdir -p dist-package
+        cp -r dist/* dist-package/
+        cp README.md dist-package/
+        cp requirements.txt dist-package/
+    
+    - name: Archive distribution
+      uses: actions/upload-artifact@v3
+      with:
+        name: data-management-tool-${{ matrix.os }}
+        path: dist-package/*
+
+  publish-release:
+    name: Publish Release Assets
+    needs: build-and-release
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+    
+    - name: Display structure of downloaded files
+      run: ls -R
+    
+    - name: Create release archives
+      run: |
+        cd data-management-tool-ubuntu-latest && tar -czf ../data-management-tool-linux.tar.gz * && cd ..
+        cd data-management-tool-macos-latest && tar -czf ../data-management-tool-macos.tar.gz * && cd ..
+        cd data-management-tool-windows-latest && zip -r ../data-management-tool-windows.zip * && cd ..
+    
+    - name: Upload release assets
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          data-management-tool-linux.tar.gz
+          data-management-tool-macos.tar.gz
+          data-management-tool-windows.zip
