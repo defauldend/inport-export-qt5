@@ -148,6 +148,24 @@ class MainWindow(QMainWindow):
         self.btn_db_ops.clicked.connect(self.open_db_dialog)
         self.btn_fetch_api.clicked.connect(self.fetch_from_api)
 
+        # --- Menu bar with Novedades ---
+        self._create_menu_bar()
+
+    def _create_menu_bar(self):
+        menu_bar = self.menuBar()
+        # File menu placeholder
+        file_menu = menu_bar.addMenu("&File")
+        # Edit menu placeholder
+        edit_menu = menu_bar.addMenu("&Edit")
+
+        # Help menu with 'Novedades'
+        help_menu = menu_bar.addMenu("&Help")
+        self.whatsnew_action = QPushButton("Novedades", self)
+        # Use QAction-like behaviour via QPushButton triggered slot
+        self.whatsnew_action.clicked.connect(self.show_novedades)
+        # Add the button widget into the help menu as an action
+        help_menu.addAction(self.whatsnew_action.action())
+
     def show_message(self, title, message):
         QMessageBox.information(self, title, message)
 
@@ -250,6 +268,19 @@ class MainWindow(QMainWindow):
             self.show_message("API Error", f"Could not fetch data from API:\n{e}")
         except Exception as e:
             self.show_message("Error", f"An error occurred:\n{e}")
+
+    def show_novedades(self):
+        """Muestra un resumen breve de nuevas características."""
+        novedades = (
+            "Novedades:\n\n"
+            "• Importar/Exportar CSV y Excel\n"
+            "• Operaciones con BD (SQLite por defecto)\n"
+            "• Carga de datos desde APIs JSON\n"
+            "• Vista de DataFrame editable y acciones básicas\n"
+            "• Mensajes de éxito/error y validaciones básicas\n\n"
+            "Consulta el README.md para más detalles sobre instalación y uso."
+        )
+        QMessageBox.information(self, "Novedades", novedades)
 
 # --- Application Execution ---
 if __name__ == '__main__':
