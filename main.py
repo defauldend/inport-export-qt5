@@ -6,7 +6,7 @@ from sqlalchemy import create_engine, text
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QTableView, QWidget, QVBoxLayout,
     QPushButton, QFileDialog, QDialog, QLineEdit, QGridLayout, QLabel,
-    QMessageBox, QDialogButtonBox
+    QMessageBox, QDialogButtonBox, QAction
 )
 from PyQt5.QtCore import QAbstractTableModel, Qt, pyqtSignal
 
@@ -160,11 +160,9 @@ class MainWindow(QMainWindow):
 
         # Help menu with 'Novedades'
         help_menu = menu_bar.addMenu("&Help")
-        self.whatsnew_action = QPushButton("Novedades", self)
-        # Use QAction-like behaviour via QPushButton triggered slot
-        self.whatsnew_action.clicked.connect(self.show_novedades)
-        # Add the button widget into the help menu as an action
-        help_menu.addAction(self.whatsnew_action.action())
+        self.whatsnew_action = QAction("Novedades", self)
+        self.whatsnew_action.triggered.connect(self.show_novedades)
+        help_menu.addAction(self.whatsnew_action)
 
     def show_message(self, title, message):
         QMessageBox.information(self, title, message)
